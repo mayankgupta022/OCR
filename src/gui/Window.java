@@ -15,24 +15,28 @@ import javax.imageio.ImageIO;
 import javax.imageio.IIOImage;
 import java.awt.image.*;
 import java.io.*;
-
 import javax.imageio.*;
 import java.util.*;
 import javax.swing.filechooser.FileFilter;
+import net.sourceforge.tess4j.*;
 
 public class Window {
 
 	private JFrame mainFrame = new JFrame();
 	private int noOfLanguages;
+	private float scaleX, scaleY;
 	private String[] availableLanguages;
 	private String[] availableLanguagesCodes;
 	public String filename;
-
+	BufferedImage image = null;
 	public static final String APP_NAME = "Java OCR";
 	private static final String strCurrentDirectory = "currentDirectory";
 	private static final String strOutputDirectory = "outputDirectory";
 	final JImageLabel imageLabel = new JImageLabel();
 	final JTextArea textArea = new JTextArea();
+	JComboBox comboBox = new JComboBox();
+	JSplitPane splitPane = new JSplitPane();
+	JScrollPane scrollPane = new JScrollPane();
 	final Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
 	final JFileChooser fileOpener = new JFileChooser();
 	final JFileChooser fileSaver = new JFileChooser();
@@ -80,7 +84,7 @@ public class Window {
 		availableLanguagesCodes = new String[noOfLanguages];
 		availableLanguages[0]="English";
 		availableLanguagesCodes[0]="eng";
-		
+
 		mainFrame.setTitle(APP_NAME);
 		mainFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(Window.class.getResource("/gui/icons/ocr.png")));
 		mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -106,13 +110,13 @@ public class Window {
 		mnFile.add(mntmExit);
 		JMenu mnSettings = new JMenu("Settings");
 		menuBar.add(mnSettings);
-		
+
 		JMenu mnPageSegmentationMode = new JMenu("Page Segmentation Mode");
 		mnSettings.add(mnPageSegmentationMode);
-		
+
 		JMenuItem menuItem = new JMenuItem("0");
 		mnPageSegmentationMode.add(menuItem);
-		
+
 		JMenuItem menuItem_1 = new JMenuItem("1");
 		mnPageSegmentationMode.add(menuItem_1);
 
@@ -150,20 +154,18 @@ public class Window {
 		toolBar.add(lblSelectLangauge);
 
 		DefaultComboBoxModel model = new DefaultComboBoxModel(availableLanguages);
-		JComboBox comboBox = new JComboBox();
+
 		comboBox.setMaximumSize(new Dimension(200, 24));
 		comboBox.setAlignmentX(Component.RIGHT_ALIGNMENT);
 		comboBox.setModel(model);
 		toolBar.add(comboBox);
 		mainFrame.getContentPane().add(toolBar, BorderLayout.NORTH);
 
-		JSplitPane splitPane = new JSplitPane();
 		mainFrame.getContentPane().add(splitPane, BorderLayout.CENTER);
 
 
 		splitPane.setRightComponent(textArea);
 
-		JScrollPane scrollPane = new JScrollPane();
 		splitPane.setLeftComponent(scrollPane);
 		splitPane.setDividerLocation(screen.width/2);
 		scrollPane.setViewportView(imageLabel);
@@ -200,7 +202,7 @@ public class Window {
 		mntmOpen.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				fileOpen(e);
+				fileOpen();
 			}
 
 		});
@@ -208,7 +210,7 @@ public class Window {
 		mntmSave.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				fileSave(e);
+				fileSave();
 			}
 		});
 
@@ -222,30 +224,30 @@ public class Window {
 		jButtonOpen.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				fileOpen(e);
+				fileOpen();
 			}
 		});
 
 		jButtonSave.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				fileSave(e);
+				fileSave();
 			}
 		});
 
 		jButtonOcr.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
+				performOcr();
 			}
 		});
 
 	}
 
-	public void fileOpen(MouseEvent e) {
+	public void fileOpen() {
 
 		int rVal = fileOpener.showOpenDialog(mainFrame);
 		File file = fileOpener.getSelectedFile();
-		BufferedImage image = null;
 		if(rVal == JFileChooser.APPROVE_OPTION) {
 			try
 			{
@@ -269,12 +271,15 @@ public class Window {
 				newImageWidth=imageLabel.getWidth();
 				newImageHeight=(imageIcon.getIconHeight()*newImageWidth)/imageIcon.getIconWidth();
 			}
+
+			scaleX = (float) imageIcon.getIconWidth() / newImageWidth;
+			scaleY=scaleX;
 			imageIcon.setScaledSize(newImageWidth, newImageHeight);
 			imageLabel.setIcon(imageIcon);
 		}
 	}
 
-	public void fileSave(MouseEvent e) {
+	public void fileSave() {
 		int rVal = fileSaver.showSaveDialog(mainFrame);
 		if(rVal == JFileChooser.APPROVE_OPTION) {
 			File file = fileSaver.getSelectedFile();
@@ -286,12 +291,55 @@ public class Window {
 					out = new BufferedWriter(new FileWriter(file + ".txt"));
 				out.write(textArea.getText());
 				out.close();
-			} catch (IOException e1) {
+			} catch (IOException ex) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				ex.printStackTrace();
 				System.exit(1);
 			}
 		}
 	}
 
+	public void performOcr() {
+		if (imageLabel.getIcon() == null) {
+			JOptionPane.showMessageDialog(mainFrame ,"Please load an image.", APP_NAME, JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+
+		Rectangle rect = ((JImageLabel) imageLabel).getRect();
+
+		if (rect != null) {
+			try {
+				ImageIcon ii = (ImageIcon) this.imageLabel.getIcon();
+				int offsetX = 0;
+				int offsetY = 0;
+				if (ii.getIconWidth() < this.scrollPane.getWidth()) {
+					offsetX = (this.scrollPane.getViewport().getWidth() - ii.getIconWidth()) / 2;
+				}
+				if (ii.getIconHeight() < this.scrollPane.getHeight()) {
+					offsetY = (this.scrollPane.getViewport().getHeight() - ii.getIconHeight()) / 2;
+				}
+				rect = new Rectangle((int) ((rect.x - offsetX) * scaleX), (int) ((rect.y - offsetY) * scaleY), (int) (rect.width * scaleX), (int) (rect.height * scaleY));
+				doOCR(rect);
+			} catch (RasterFormatException rfe) {
+				JOptionPane.showMessageDialog(mainFrame, rfe.getMessage(), APP_NAME, JOptionPane.ERROR_MESSAGE);
+				//                rfe.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else {
+			doOCR(null);
+		}
+	}
+	
+	public void doOCR(Rectangle rect)
+	{
+	       Tesseract instance = Tesseract.getInstance(); // JNA Interface Mapping
+	        // Tesseract1 instance = new Tesseract1(); // JNA Direct Mapping
+	        try {
+	            String result = instance.doOCR(image,rect);
+	            textArea.setText(result);
+	        } catch (TesseractException e) {
+	            System.err.println(e.getMessage());
+	        }
+	}
 }
