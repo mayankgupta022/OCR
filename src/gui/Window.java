@@ -2,6 +2,7 @@ package gui;
 
 import java.awt.*;
 import javax.swing.*;
+
 import java.awt.BorderLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -11,10 +12,9 @@ import java.awt.event.MouseEvent;
 import java.awt.Component;
 import javax.swing.GroupLayout.Alignment;
 import net.sourceforge.vietocr.*;
-import javax.imageio.ImageIO;
-import javax.imageio.IIOImage;
 import java.awt.image.*;
 import java.io.*;
+
 import javax.imageio.*;
 import java.util.*;
 import javax.swing.filechooser.FileFilter;
@@ -24,14 +24,25 @@ public class Window {
 
 	private JFrame mainFrame = new JFrame();
 	private int noOfLanguages;
-	private float scaleX, scaleY;
+	float scaleX = 1f;
+	float scaleY = 1f;
+	static String selectedUILang = "en";
+	int newImageHeight;
+	int newImageWidth;
+	Point curScrollPos;
 	private String[] availableLanguages;
 	private String[] availableLanguagesCodes;
 	public String filename;
 	BufferedImage image = null;
-	public static final String APP_NAME = "Java OCR";
-	private static final String strCurrentDirectory = "currentDirectory";
-	private static final String strOutputDirectory = "outputDirectory";
+	private static final String APP_NAME = "Java OCR";
+    public static final String TESSERACT_PATH = "tesseract-ocr";
+    protected final File baseDir = Utilities.getBaseDir(Window.this);
+    final String TESSDATA = "tessdata";
+    protected String tessPath;
+	//	private static final String strCurrentDirectory = "currentDirectory";
+	//	private static final String strOutputDirectory = "outputDirectory";
+	private static final String helpMsg = "Help of App comes here";
+	private static final String aboutMsg = "About msg comes here";
 	final JImageLabel imageLabel = new JImageLabel();
 	final JTextArea textArea = new JTextArea();
 	JComboBox comboBox = new JComboBox();
@@ -68,14 +79,6 @@ public class Window {
 	 * Initialize the contents of the frame.
 	 */
 
-	private int snap(final int ideal, final int min, final int max) {
-		final int TOLERANCE = 0;
-		return ideal < min + TOLERANCE ? min : (ideal > max - TOLERANCE ? max : ideal);
-	}
-
-	void quit() {
-		System.exit(0);
-	}
 	private void initialize() {
 
 		imageLabel.setIcon(null);
@@ -100,10 +103,10 @@ public class Window {
 		JMenu mnFile = new JMenu("File");
 		menuBar.add(mnFile);
 
-		JMenuItem mntmOpen = new JMenuItem("Open");
+		JMenuItem mntmOpen = new JMenuItem("Open Image");
 		mnFile.add(mntmOpen);
 
-		JMenuItem mntmSave = new JMenuItem("Save");
+		JMenuItem mntmSave = new JMenuItem("Save Text");
 		mnFile.add(mntmSave);
 
 		JMenuItem mntmExit = new JMenuItem("Exit");
@@ -168,6 +171,7 @@ public class Window {
 
 		splitPane.setLeftComponent(scrollPane);
 		splitPane.setDividerLocation(screen.width/2);
+		imageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
 		scrollPane.setViewportView(imageLabel);
 
 		fileOpener.setDialogTitle(jButtonOpen.getToolTipText()); // NOI18N
@@ -221,6 +225,20 @@ public class Window {
 			}
 		});
 
+		mntmJavaOcrHelp.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				showHelp();
+			}
+		});
+
+		mntmAboutJavaOcr.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				showAbout();
+			}
+		});
+
 		jButtonOpen.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
@@ -259,12 +277,9 @@ public class Window {
 				System.exit(1);
 			}
 			ImageIconScalable imageIcon = new ImageIconScalable(image);
-			int newImageHeight;
-			int newImageWidth;
-			if(imageIcon.getIconHeight()>imageLabel.getHeight())
-				newImageHeight=imageLabel.getHeight();
-			else
-				newImageHeight=imageIcon.getIconHeight();
+
+			newImageHeight=imageLabel.getHeight();
+			newImageWidth=imageLabel.getWidth();
 			newImageWidth=(imageIcon.getIconWidth()*newImageHeight)/imageIcon.getIconHeight();
 			if(newImageWidth>imageLabel.getWidth())
 			{	
@@ -275,9 +290,22 @@ public class Window {
 			scaleX = (float) imageIcon.getIconWidth() / newImageWidth;
 			scaleY=scaleX;
 			imageIcon.setScaledSize(newImageWidth, newImageHeight);
+			//			oldImageWidth = imageIcon.getIconWidth();
+			//			oldImageHeight = imageIcon.getIconHeight();
+
+			//			Dimension fitSize = fitImagetoContainer(oldImageWidth, oldImageHeight, scrollPane.getViewport().getWidth(), scrollPane.getViewport().getHeight());
+			//			imageIcon.setScaledSize(fitSize.width, fitSize.height);
+			//			scaleX=fitSize.width;
+			//			scaleY=fitSize.height;
+
+			//		imageLabel.setIcon(imageIcon);
+			//		scrollPane.getViewport().setViewPosition(curScrollPos = new Point());
+			//		imageLabel.revalidate();
 			imageLabel.setIcon(imageIcon);
+
 		}
 	}
+
 
 	public void fileSave() {
 		int rVal = fileSaver.showSaveDialog(mainFrame);
@@ -330,16 +358,38 @@ public class Window {
 			doOCR(null);
 		}
 	}
-	
+
 	public void doOCR(Rectangle rect)
 	{
-	       Tesseract instance = Tesseract.getInstance(); // JNA Interface Mapping
-	        // Tesseract1 instance = new Tesseract1(); // JNA Direct Mapping
-	        try {
-	            String result = instance.doOCR(image,rect);
-	            textArea.setText(result);
-	        } catch (TesseractException e) {
-	            System.err.println(e.getMessage());
-	        }
+		Tesseract instance = Tesseract.getInstance(); // JNA Interface Mapping
+		// Tesseract1 instance = new Tesseract1(); // JNA Direct Mapping
+		tessPath = new File(baseDir, TESSERACT_PATH).getPath();
+//		instance.setDatapath(new File(tessPath, TESSDATA).getPath());
+//		System.out.println(new File(tessPath, TESSDATA).getPath());
+//		instance.setLanguage("eng");
+		instance.setPageSegMode(3);
+		try {
+			String result = instance.doOCR(image,rect);
+			textArea.setText(result);
+		} catch (TesseractException e) {
+			System.err.println(e.getMessage());
+		}
 	}
+
+	public void showHelp()
+	{
+		JOptionPane.showMessageDialog(mainFrame, helpMsg, APP_NAME + "Help", JOptionPane.PLAIN_MESSAGE);
+		return;
+	}
+
+	public void showAbout()
+	{
+		JOptionPane.showMessageDialog(mainFrame, aboutMsg, "About" + APP_NAME, JOptionPane.PLAIN_MESSAGE);
+		return;
+	}
+
+	void quit() {
+		System.exit(0);
+	}
+
 }

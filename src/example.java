@@ -4,9 +4,10 @@ import net.sourceforge.tess4j.*;
 public class example {
 
     public static void main(String[] args) {
-        File imageFile = new File("eurotext.tif");
+        File imageFile = new File("C:\\Users\\Mayank\\Documents\\sample\\6.gif");
         Tesseract instance = Tesseract.getInstance(); // JNA Interface Mapping
-        // Tesseract1 instance = new Tesseract1(); // JNA Direct Mapping
+//         Tesseract1 instance = new Tesseract1(); // JNA Direct Mapping
+		
         try {
             String result = instance.doOCR(imageFile);
             System.out.println(result);
