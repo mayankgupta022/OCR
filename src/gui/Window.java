@@ -35,10 +35,11 @@ public class Window {
 	public String filename;
 	BufferedImage image = null;
 	private static final String APP_NAME = "Java OCR";
-    public static final String TESSERACT_PATH = "tesseract-ocr";
-    protected final File baseDir = Utilities.getBaseDir(Window.this);
-    final String TESSDATA = "tessdata";
-    protected String tessPath;
+	public static final String TESSERACT_PATH = "tesseract-ocr";
+	protected final File baseDir = Utilities.getBaseDir(Window.this);
+	final String TESSDATA = "tessdata";
+	protected String tessPath;
+	int pagemode=3;
 	//	private static final String strCurrentDirectory = "currentDirectory";
 	//	private static final String strOutputDirectory = "outputDirectory";
 	private static final String helpMsg = "Help of App comes here";
@@ -111,22 +112,139 @@ public class Window {
 
 		JMenuItem mntmExit = new JMenuItem("Exit");
 		mnFile.add(mntmExit);
-		JMenu mnSettings = new JMenu("Settings");
-		menuBar.add(mnSettings);
 
+		ButtonGroup groupPSM = new ButtonGroup();
 		JMenu mnPageSegmentationMode = new JMenu("Page Segmentation Mode");
-		mnSettings.add(mnPageSegmentationMode);
+		menuBar.add(mnPageSegmentationMode);
+		JRadioButton menuItem0 = new JRadioButton("0 = Orientation and script detection (OSD) only.");
+		menuItem0.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pagemode=0;
+				System.out.println(pagemode);
+			}
+		});
+		groupPSM.add(menuItem0);
+		mnPageSegmentationMode.add(menuItem0);
 
-		JMenuItem menuItem = new JMenuItem("0");
-		mnPageSegmentationMode.add(menuItem);
+		JRadioButton menuItem1 = new JRadioButton("1 = Automatic page segmentation with OSD.");
+		menuItem1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pagemode=1;
+				System.out.println(pagemode);
+			}
+		});
+		groupPSM.add(menuItem1);
+		mnPageSegmentationMode.add(menuItem1);
 
-		JMenuItem menuItem_1 = new JMenuItem("1");
-		mnPageSegmentationMode.add(menuItem_1);
+		JRadioButton menuItem2 = new JRadioButton("2 = Automatic page segmentation, but no OSD, or OCR");
+		menuItem1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pagemode=2; 
+				System.out.println(pagemode);
+			}
+		});
+		groupPSM.add(menuItem2);
+		mnPageSegmentationMode.add(menuItem2);
+
+		JRadioButton menuItem3 = new JRadioButton("3 = Fully automatic page segmentation, but no OSD. (Default)");
+		menuItem3.setSelected(true);
+		menuItem1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pagemode=3; 
+				System.out.println(pagemode);
+			}
+		});
+		groupPSM.add(menuItem3);
+		mnPageSegmentationMode.add(menuItem3);
+
+		JRadioButton menuItem4 = new JRadioButton("4 = Assume a single column of text of variable sizes.");
+		menuItem1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pagemode=4;
+				System.out.println(pagemode);
+			}
+		});
+		groupPSM.add(menuItem4);
+		mnPageSegmentationMode.add(menuItem4);
+
+		JRadioButton menuItem5 = new JRadioButton("5 = Assume a single uniform block of vertically aligned text.");
+		menuItem1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pagemode=5;
+				System.out.println(pagemode);
+			}
+		});
+		groupPSM.add(menuItem5);
+		mnPageSegmentationMode.add(menuItem5);
+
+		JRadioButton menuItem6 = new JRadioButton("6 = Assume a single uniform block of text.");
+		menuItem1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pagemode=6;
+				System.out.println(pagemode);
+			}
+		});
+		groupPSM.add(menuItem6);
+		mnPageSegmentationMode.add(menuItem6);
+
+		JRadioButton menuItem7 = new JRadioButton("7 = Treat the image as a single text line.");
+		menuItem1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pagemode=7;
+				System.out.println(pagemode);
+			}
+		});
+		groupPSM.add(menuItem7);
+		mnPageSegmentationMode.add(menuItem7);
+
+		JRadioButton menuItem8 = new JRadioButton("8 = Treat the image as a single word.");
+		menuItem1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pagemode=8;
+				System.out.println(pagemode);
+			}
+		});
+		groupPSM.add(menuItem8);
+		mnPageSegmentationMode.add(menuItem8);
+
+		JRadioButton menuItem9 = new JRadioButton("9 = Treat the image as a single word in a circle.");
+		menuItem1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pagemode=9;
+				System.out.println(pagemode);
+			}
+		});
+		groupPSM.add(menuItem9);
+		mnPageSegmentationMode.add(menuItem9);
+
+		JRadioButton menuItem10 = new JRadioButton("10 = Treat the image as a single character.");
+		menuItem1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pagemode=10; 
+				System.out.println(pagemode);
+			}
+		});
+		groupPSM.add(menuItem10);
+		mnPageSegmentationMode.add(menuItem10);
+
+		;
 
 		JMenu mnHelp = new JMenu("Help");
 		menuBar.add(mnHelp);
 
 		JMenuItem mntmJavaOcrHelp = new JMenuItem(APP_NAME + " Help");
+
 		mnHelp.add(mntmJavaOcrHelp);
 
 		JMenuItem mntmAboutJavaOcr = new JMenuItem("About " + APP_NAME);
@@ -227,14 +345,14 @@ public class Window {
 
 		mntmJavaOcrHelp.addMouseListener(new MouseAdapter() {
 			@Override
-			public void mouseClicked(MouseEvent e) {
+			public void mouseReleased(MouseEvent e) {
 				showHelp();
 			}
 		});
 
 		mntmAboutJavaOcr.addMouseListener(new MouseAdapter() {
 			@Override
-			public void mouseClicked(MouseEvent e) {
+			public void mouseReleased(MouseEvent e) {
 				showAbout();
 			}
 		});
@@ -364,10 +482,10 @@ public class Window {
 		Tesseract instance = Tesseract.getInstance(); // JNA Interface Mapping
 		// Tesseract1 instance = new Tesseract1(); // JNA Direct Mapping
 		tessPath = new File(baseDir, TESSERACT_PATH).getPath();
-//		instance.setDatapath(new File(tessPath, TESSDATA).getPath());
-//		System.out.println(new File(tessPath, TESSDATA).getPath());
-//		instance.setLanguage("eng");
-		instance.setPageSegMode(3);
+		//		instance.setDatapath(new File(tessPath, TESSDATA).getPath());
+		//		System.out.println(new File(tessPath, TESSDATA).getPath());
+		//		instance.setLanguage("eng");
+		instance.setPageSegMode(pagemode);
 		try {
 			String result = instance.doOCR(image,rect);
 			textArea.setText(result);
