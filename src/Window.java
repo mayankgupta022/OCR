@@ -8,7 +8,8 @@ import java.awt.Component;
 import net.sourceforge.vietocr.*;
 import java.awt.image.*;
 import java.io.*;
-
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.imageio.*;
 import javax.swing.filechooser.FileFilter;
 import net.sourceforge.tess4j.*;
@@ -32,8 +33,9 @@ public class Window {
 	final String TESSDATA = "tessdata";
 	protected String tessPath;
 	int pagemode=3;
-	private static final String helpMsg = "Help of App comes here";
-	private static final String aboutMsg = "About msg comes here";
+	private static final String helpMsg = " 1. Launch the application using main function of class Window.\n 2. The application would start and look like this.\n 3. Cilck on File->Open in Menu Bar or Open button in Tool Bar to open an image to perform OCR.\n 4. Select the image and press ‘Open’ to load it.\n 5. The image will show up in the left-hand side pane.\n 6. Click on Perform OCR button in Tool Bar to perform OCR on the entire image.\n 7. The application uses Tesseract OCR Engine to perform OCR and the resulting text is displayed in the text area at right-hand side.\n 8. Text can be modified as per requirement.\n 9. Click on File->Save in Menu Bar or Save button on Tool Bar to save the text.\n10. Type in the name of file in appropriate directory and click ‘Save’.\n11. The process is complete. OCR has been performed on image and output is now stored in a text file.\n\nAdditional Options:\nSeveral options are provided in the application which can be configured as per requirement:\n1. Page segmentation: Page Segmentation can be changed by selecting appropriate mode from option Page Segmentation Mode in Menu Bar.\n For eg: This image contains 2 columns. Default option '3 = Fully automatic page segmentation, but no OSD. (Default)' automatically detects presence of 2 columns and delivers final text based on that.\nHowever, if it is required that the final text still be in 2 columns, option '4 = Assume a single column of text of variable sizes.' Can be used.\n 2. Multiple Languages: The application currently supports 2 languages, namely English and Hindi. However, support for more languages can be added with minimal changes.\nDefault language is English. To change the language, select new language from the dropdown menu on the right hand side in Tool Bar.\nPerform remaining steps same as described earlier.\n3. OCR on partial image: It is also possible to perform OCR on a part of image only. To do this, simply drag mouse around the area you want to perform OCR on. A rectangle shows up around this area.\nPerform remaining steps same as described earlier.\n";
+	private static final String aboutMsg = APP_NAME + "\nJava GUI for Tesseract 3.02 OCR Engine\nhttp://www.github.com/mayankgupta022/OCR";
+	private JFrame helptopicsFrame;
 	final JImageLabel imageLabel = new JImageLabel();
 	final JTextArea textArea = new JTextArea();
 	JComboBox comboBox = new JComboBox();
@@ -330,7 +332,12 @@ public class Window {
 		mntmJavaOcrHelp.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				showHelp();
+				try {
+					showHelp();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 		});
 
@@ -468,11 +475,22 @@ public class Window {
 		}
 	}
 
-	public void showHelp()
+	public void showHelp() throws IOException
 	{
-		JOptionPane.showMessageDialog(mainFrame, helpMsg, APP_NAME + "Help", JOptionPane.PLAIN_MESSAGE);
-		return;
-	}
+//		JOptionPane.showMessageDialog(mainFrame, helpMsg, APP_NAME + "Help", JOptionPane.PLAIN_MESSAGE);
+		JEditorPane edit = new JEditorPane();
+		edit.setEditable(false);
+		edit.setText(helpMsg);
+		JScrollPane editorScrollPane = new JScrollPane(edit);
+		editorScrollPane.setPreferredSize(new Dimension(250, 145));
+		JFrame frame2 = new JFrame();
+		frame2.setLocation(mainFrame.getWidth()/2-300, mainFrame.getHeight()/2-300);
+		frame2.getContentPane().add(editorScrollPane);
+		frame2.setSize(600,600);
+		frame2.setTitle(APP_NAME + " Help");
+		frame2.setVisible(true);
+		
+        }
 
 	public void showAbout()
 	{
